@@ -15,6 +15,8 @@
 
 LNK Reader is a command-line tool designed to read and extract information from Windows shortcut (.lnk) files. It provides insights into the target file or directory paths and supports educational purposes.
 
+[Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
+
 
 ---
 ---
