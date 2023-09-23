@@ -1,4 +1,4 @@
-![Version](https://img.shields.io/badge/VERSION-PRE_ALPHA-orange) ![C](https://img.shields.io/badge/C-GCC-purple)
+![Version](https://img.shields.io/badge/PRE_ALPHA-red) ![C](https://img.shields.io/badge/C-GCC-purple)
 
 ```
 ██╗     ███╗   ██╗██╗  ██╗    ██████╗ ███████╗ █████╗ ██████╗ ███████╗██████╗ 
