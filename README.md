@@ -1,5 +1,5 @@
 ![Version](https://img.shields.io/badge/PRE_ALPHA-red) ![C](https://img.shields.io/badge/C-GCC-purple)
-![Version](https://img.shields.io/badge/LINUX-yellow) ![Version](https://img.shields.io/badge/MAC-white) 
+![Version](https://img.shields.io/badge/LINUX-yellow) ![Version](https://img.shields.io/badge/Macintosh-white) 
 ```
 ██╗     ███╗   ██╗██╗  ██╗    ██████╗ ███████╗ █████╗ ██████╗ ███████╗██████╗ 
 ██║     ████╗  ██║██║ ██╔╝    ██╔══██╗██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗
