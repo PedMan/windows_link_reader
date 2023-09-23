@@ -143,7 +143,10 @@ If you're a 3D animator, consider:
 
 5. Now, you should be able to find and run your application from your system's application launcher.
 
+
 ### **MacOS Systems:**
+
+###### I don't know why am I doing this tutorial but let's go ;
 
 1. **Ensure you have the Xcode command line tools installed**. This provides you with the necessary compilers:
     ```bash
@@ -153,7 +156,6 @@ If you're a 3D animator, consider:
 2. **Compile the program as indicated in the General Setup**.
 
 3. **To run the program, you can use the Terminal as in the General Setup** or create a simple script or Automator application for easier access.
-
 
 
 ```
