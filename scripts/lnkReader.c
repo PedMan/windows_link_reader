@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <sys/utsname.h>
 
 #define MAX_DATA_SIZE 4096
 
@@ -18,14 +19,33 @@ char* binaryToASCII(const unsigned char* data, int length) {
     return asciiStr;
 }
 
+void showError(const char* message) {
+    struct utsname sysinfo;
+    uname(&sysinfo);
+    char cmd[1024];
+
+    if (strcmp(sysinfo.sysname, "Linux") == 0) {
+        sprintf(cmd, "notify-send 'Error' '%s'", message);
+    } else if (strcmp(sysinfo.sysname, "Darwin") == 0) {
+        sprintf(cmd, "osascript -e 'display notification \"%s\" with title \"Error\"'", message);
+    } else if (strstr(sysinfo.sysname, "Win") != NULL) {
+        sprintf(cmd, "msg * /v %s", message);
+    } else {
+        printf("Unknown OS. Cannot display notification.\n");
+        return;
+    }
+
+    system(cmd);
+}
+
 char* findLongestValidPath(const char* str) {
     regex_t regex;
     regmatch_t matches[2];
-    char pattern[] = "([A-Za-z]:[\\\\/][^ ]+?[\\\\/][^ ]+)";
+    char pattern[] = "([A-Za-z]:[\\\\/][^ ]+( [^ ]+)*[^ ]*)";
     char* longestPath = NULL;
 
     if (regcomp(&regex, pattern, REG_EXTENDED)) {
-        system("zenity --error --text='Failed to compile regex.'");
+        showError("Failed to compile regex.");
         return NULL;
     }
 
@@ -33,8 +53,8 @@ char* findLongestValidPath(const char* str) {
     while (!regexec(&regex, currentSearch, 2, matches, 0)) {
         int start = matches[1].rm_so;
         int end = matches[1].rm_eo;
-        
-        if(!longestPath || (end - start) > strlen(longestPath)) {
+
+        if (!longestPath || (end - start) > strlen(longestPath)) {
             free(longestPath);
             longestPath = malloc(end - start + 1);
             strncpy(longestPath, currentSearch + start, end - start);
@@ -47,15 +67,16 @@ char* findLongestValidPath(const char* str) {
     return longestPath;
 }
 
+
 int main(int argc, char* argv[]) {
     if (argc != 2) {
-        system("zenity --error --text='Incorrect number of arguments.'");
+        showError("Incorrect number of arguments.");
         return 1;
     }
 
     FILE* file = fopen(argv[1], "rb");
     if (!file) {
-        system("zenity --error --text='Error opening the .lnk file.'");
+        showError("Error opening the .lnk file.");
         return 1;
     }
 
@@ -71,21 +92,28 @@ int main(int argc, char* argv[]) {
             if (foundPath[i] == '\\') {
                 foundPath[i] = '/';
             }
-        }
+        }   
 
         char cmd[1024];
-        sprintf(cmd, "xdg-open '%s'", foundPath);
+        // Assuming if the path doesn't have a file extension, it's a directory
+        if (strchr(foundPath, '.') == NULL) {
+            sprintf(cmd, "xdg-open '%s/'", foundPath);
+        } else {
+            sprintf(cmd, "xdg-open '%s'", foundPath);
+        }   
+
         if (system(cmd) != 0) {
             char errMsg[512];
-            sprintf(errMsg, "zenity --error --text='Error opening path: %s'", foundPath);
-            system(errMsg);
-        }
+            sprintf(errMsg, "Error opening path: %s", foundPath);
+            showError(errMsg);
+        }   
 
         free(foundPath);
     } else {
-        system("zenity --error --text='Path not found in the provided .lnk file.'");
+        char errMsg[512];
+        sprintf(errMsg, "Path %s not found in the provided .lnk file.", foundPath);
+        showError(errMsg);
     }
-
     free(asciiData);
     return 0;
 }
