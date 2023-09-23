@@ -15,6 +15,8 @@
 
 This program is designed to extract and open a file path from a Windows `.lnk` shortcut file on non-Windows systems. The program reads the binary content of the `.lnk` file, converts it into ASCII, attempts to find the longest valid path, and finally, tries to open the path using the system's default program.
 
+> **Note:** Older compilers may encounter issues with the use of the `//` style comments present in this code. If you're facing compilation issues, you might want to replace these comments with the traditional `/* ... */` style. Alternatively, consider upgrading to a modern compiler version, such as GCC.
+
 [Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
 
 ---
@@ -92,23 +94,67 @@ If you're a 3D animator, consider:
 
 ## 📥 Installation
 
+### **LINUX Systems:**
 
-Clone the repository
-```
-git clone https://github.com/USERNAME/REPOSITORY.git
-```
-Navigate to the project folder
-```
-cd REPOSITORY
-```
-Compile the program
-```
-gcc lnkReader.c -o open_lnk
-```
-Run the program
-```
-./open_lnk [PATH_TO_LNK_FILE]
-```
+1. **Clone the repository**:
+    ```bash
+    git clone https://github.com/SECRET-GUEST/windows_link_reader.git
+    ```
+
+2. **Navigate to the project folder**:
+    ```bash
+    cd REPOSITORY
+    ```
+
+3. **Compile the program**:
+    ```bash
+    gcc lnkReader.c -o open_lnk
+    ```
+
+4. **Run the program**:
+    ```bash
+    ./open_lnk [PATH_TO_LNK_FILE]
+    ```
+
+### **Debian Systems - Creating a `.desktop` Application:**
+
+1. **Create a new `.desktop` file**:
+    ```bash
+    vim ~/.local/share/applications/open_lnk.desktop
+    ```
+##### use vim nano or whatever else txt editor
+   
+3. **Add the following content to the file**, adjusting paths as necessary:
+    ```
+    [Desktop Entry]
+    Version=1.0
+    Name=Open LNK
+    Comment=Open a Windows .lnk file
+    Exec=/path_to_compiled_program/open_lnk %U
+    Terminal=true
+    Type=Application
+    Categories=Utility;
+    ```
+
+4. **Make the `.desktop` file executable**:
+    ```bash
+    chmod +x ~/.local/share/applications/open_lnk.desktop
+    ```
+
+5. Now, you should be able to find and run your application from your system's application launcher.
+
+### **MacOS Systems:**
+
+1. **Ensure you have the Xcode command line tools installed**. This provides you with the necessary compilers:
+    ```bash
+    xcode-select --install
+    ```
+
+2. **Compile the program as indicated in the General Setup**.
+
+3. **To run the program, you can use the Terminal as in the General Setup** or create a simple script or Automator application for easier access.
+
+
 
 ```
      _ ._  _ , _ ._            _ ._  _ , _ ._    _ ._  _ , _ ._      _ ._  _ , _ .__  _ , _ ._   ._  _ , _ ._   _ , _ ._   .---.  _ ._   _ , _ .__  _ , _ ._   ._  _ , _ ._      _ ._  _ , _ .__  _ , _ . .---<__. \ _
