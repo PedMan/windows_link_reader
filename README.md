@@ -24,13 +24,12 @@ LNK Reader is a command-line tool designed to read and extract information from 
 
 1. [Features](#-features)
 2. [Prerequisites](#-prerequisites)
-<!-- 3. [to do](#-todo) -->
 3. [Usage](#-usage)
 4. [License](#-license)
 5. [Support & Questions](#-support--questions)
 6. [Recommendations](#-recommendations)
 7. [Installation](#-installation)
-
+<!-- 3. [to do](#-todo) -->
 ## 🌟 Features
 
 - Extracts and displays information from Windows .lnk files.
