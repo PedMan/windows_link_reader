@@ -13,10 +13,9 @@
 
 #  LNK reader 🖥️
 
-LNK Reader is a command-line tool designed to read and extract information from Windows shortcut (.lnk) files. It provides insights into the target file or directory paths and supports educational purposes.
+This program is designed to extract and open a file path from a Windows `.lnk` shortcut file on non-Windows systems. The program reads the binary content of the `.lnk` file, converts it into ASCII, attempts to find the longest valid path, and finally, tries to open the path using the system's default program.
 
 [Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
-
 
 ---
 ---
@@ -34,11 +33,23 @@ LNK Reader is a command-line tool designed to read and extract information from 
 <!-- 3. [to do](#-todo) -->
 ## 🌟 Features
 
-- Extracts and displays information from Windows .lnk files.
-- Provides insights into target file or directory paths.
-- Designed for educational purposes and learning about .lnk file structure.
+1. **Binary to ASCII Conversion**:
+    - The program can convert binary data to its ASCII representation. This is especially handy for extracting textual information from binary data.
 
+2. **RegEx-based Path Extraction**:
+    - Uses regular expressions to extract the longest valid file path from the ASCII representation of the `.lnk` file.
 
+3. **OS Notification System**:
+    - Detects the underlying operating system (Linux or MacOS) and notifies the user using an appropriate notification mechanism if there are any errors or issues.
+
+4. **Path Normalization**:
+    - Transforms any Windows-style backslashes in paths (`\`) to UNIX-style forward slashes (`/`), ensuring compatibility with non-Windows systems.
+
+5. **Mounted Path Detection**:
+    - If the direct path extracted from the `.lnk` file doesn't exist on the file system, the program will attempt to find a corresponding mounted path (useful for systems with mounted Windows filesystems).
+
+6. **Default System Program Path Opening**:
+    - Once a valid path is identified, the program attempts to open it using the default program of the OS. If the path is not directly accessible, it will try to open its parent directory.
 
 ## 🔍 Prerequisites
 
