@@ -113,18 +113,18 @@ If you're a 3D animator, consider:
     gcc lnkReader.c -o open_lnk
     ```
 
-4. **Run the program**:
+4. **Try the program**:
     ```bash
-    ./open_lnk [PATH_TO_LNK_FILE]
+    ./open_lnk YOUR_FILE.lnk
     ```
 
-### **Debian Systems - Creating a `.desktop` Application:**
+### **Debian Systems - Creating a `.desktop` Application to run lnk by simple click**
 
 1. **Create a new `.desktop` file**:
     ```bash
     vim ~/.local/share/applications/open_lnk.desktop
     ```
-##### use vim nano or whatever else txt editor
+> **Note:** use vim nano or whatever else txt editor
    
 3. **Add the following content to the file**, adjusting paths as necessary:
     ```
@@ -148,7 +148,7 @@ If you're a 3D animator, consider:
 
 ### **MacOS Systems:**
 
-###### I don't know why am I doing this tutorial but let's go ;
+  ###### I don't know why am I doing this tutorial but let's go ;
 
 1. **Ensure you have the Xcode command line tools installed**. This provides you with the necessary compilers:
     ```bash
