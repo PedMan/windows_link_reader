@@ -84,7 +84,7 @@ If you have any questions or need support, please feel free to open an issue, a 
 
 In your quest for more tools to enhance your desktop productivity, these additional repositories are worth a look:
 
-- [Barcraft](https://github.com/SECRET-GUEST/barcraft) : Create barcodes/QRCodes using an application free from malware, sourced directly from GitHub.
+- [Unreal installer](https://github.com/SECRET-GUEST/Unrealinux) : An installer in C++ for Unreal Engine on linux without Epic Games launcher.
 
 Looking for more? Discover user-friendly, GUI-free script here: 
 - [Tiny Scripts](https://github.com/SECRET-GUEST/tiny-scripts)
