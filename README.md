@@ -19,7 +19,7 @@ This program is designed to extract and open a file path from a Windows `.lnk` s
 
 [Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
 
-> **Note:** In this video, it might seem slow because I was waiting for you to read the titles. This program opens .lnk links instantly, faster than Windows.
+> **Note:** In this video, it might seem slow because I was waiting for you to read the titles. This program opens .lnk links almost instantly, faster than Windows.
 
 ---
 ---
