@@ -17,7 +17,10 @@ This program is designed to extract and open a file path from a Windows `.lnk` s
 
 > **Note:** Older compilers may encounter issues with the use of the `//` style comments present in this code. If you're facing compilation issues, you might want to replace these comments with the traditional `/* ... */` style. Alternatively, consider upgrading to a modern compiler version, such as GCC.
 
-[Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
+<video controls loop>
+  <source src="https://github.com/SECRET-GUEST/windows_link_reader/raw/main/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144.webm" type="video/webm">
+  Votre navigateur ne supporte pas la vidéo.
+</video>
 
 ---
 ---
