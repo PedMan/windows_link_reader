@@ -143,7 +143,7 @@ If you're a 3D animator, consider:
     chmod +x ~/.local/share/applications/open_lnk.desktop
     ```
 
-5. Now, you should be able to find and run your application from your system's application launcher.
+5. Now, you just have to use the program by default for .lnk files, by **"open as"** 
 
 
 ### **MacOS Systems:**
