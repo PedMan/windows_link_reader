@@ -30,10 +30,10 @@ This program is designed to extract and open a file path from a Windows `.lnk` s
 1. [Features](#-features)
 2. [Prerequisites](#-prerequisites)
 3. [Usage](#-usage)
-4. [License](#-license)
-5. [Support & Questions](#-support--questions)
-6. [Recommendations](#-recommendations)
-7. [Installation](#-installation)
+4. [Recommendations](#-recommendations)
+5. [Installation](#-installation)
+6. [License](#-license)
+7. [Support & Questions](#-support--questions)
 <!-- 3. [to do](#-todo) -->
 ## 🌟 Features
 
@@ -55,29 +55,15 @@ This program is designed to extract and open a file path from a Windows `.lnk` s
 6. **Default System Program Path Opening**:
     - Once a valid path is identified, the program attempts to open it using the default program of the OS. If the path is not directly accessible, it will try to open its parent directory.
 
+7. **Fast install** :
+   - You can install it faster with the script setup.sh
+  
 ## 🔍 Prerequisites
 
 Before you begin, ensure you have the following installed:
 
 - GCC (GNU Compiler Collection) to compile the source code.
 - Linux or macOS (other Unix-like systems may work but are not officially supported).
-
-
-<!--
-## 🛠️ TODO
-
-1.
-2.
--->
-
-## 📜 License
-
-This repository is released under the [MIT License](LICENSE). Please see the `LICENSE` file for more information.
-
-
-## ❓ Support & Questions
-
-If you have any questions or need support, please feel free to open an issue, a new discussion, or join my twitter.
 
 
 ## 💎 Recommendations  
@@ -94,26 +80,38 @@ If you're a 3D animator, consider:
 
 
 
+
 ## 📥 Installation
 
 ### **LINUX Systems:**
 
-1. **Clone the repository**:
+0. **Simply run setup.sh in same directory where is lnkReader.c**
+    ```bash
+    chmod +x setup.sh
+    ```
+    then right click, execute or
+    ```bash
+    ./setup.sh
+    ```
+  But if you prefere a manual installation you can follow steps behind :
+
+
+2. **Clone the repository**:
     ```bash
     git clone https://github.com/SECRET-GUEST/windows_link_reader.git
     ```
 
-2. **Navigate to the project folder**:
+3. **Navigate to the project folder**:
     ```bash
     cd REPOSITORY
     ```
 
-3. **Compile the program**:
+4. **Compile the program**:
     ```bash
     gcc lnkReader.c -o open_lnk
     ```
 
-4. **Try the program**:
+5. **Try the program**:
     ```bash
     ./open_lnk YOUR_FILE.lnk
     ```
@@ -158,6 +156,15 @@ If you're a 3D animator, consider:
 2. **Compile the program as indicated in the General Setup**.
 
 3. **To run the program, you can use the Terminal as in the General Setup** or create a simple script or Automator application for easier access.
+
+## 📜 License
+
+This repository is released under the [MIT License](LICENSE). Please see the `LICENSE` file for more information.
+
+
+## ❓ Support & Questions
+
+If you have any questions or need support, please feel free to open an issue, a new discussion, or join my twitter.
 
 
 ```
