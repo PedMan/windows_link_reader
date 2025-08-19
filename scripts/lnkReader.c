@@ -65,33 +65,108 @@
 _ _  _ ____ ___ ____ _    _    ____ ___ _ ____ _  _
 | |\ | [__   |  |__| |    |    |__|  |  | |  | |\ |
 | | \| ___]  |  |  | |___ |___ |  |  |  | |__| | \|
-    
- */ 
 
+#OPENING | https://www.youtube.com/watch?v=_85LaeTCtV8 :3
+
+ */ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/utsname.h>
 #include <errno.h>
+
+#define MAX_DATA_SIZE 4096
+
+/*
+_  _ ____ _    ___  ____ ____ 
+|__| |___ |    |__] |___ |__/ 
+|  | |___ |___ |    |___ |  \ 
+*/
+
+// Spawn a command without /bin/sh. Returns 1 if we successfully forked and attempted exec.
+// We don't wait for the child (notifications/openers can be async).
+static int try_spawn(const char *path_or_name, char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) return 0;          // fork failed
+    if (pid == 0) {
+        // Child: try absolute path first; if there's no '/', let execvp search PATH
+        if (strchr(path_or_name, '/')) {
+            execv(path_or_name, argv);
+        } else {
+            execvp(path_or_name, argv);
+        }
+        _exit(127); // exec failed
+    }
+    return 1; // parent
+}
+
+// Hardened error notifier with multi-backend fallbacks
+static void showError(const char* message) {
+    if (!message) message = "Unknown error";
+
+    struct utsname sysinfo;
+    if (uname(&sysinfo) == 0) {
+        // --- macOS: use osascript ---
+        if (strcmp(sysinfo.sysname, "Darwin") == 0) {
+            char script[1024];
+            snprintf(script, sizeof(script),
+                     "display notification \"%s\" with title \"Error\"",
+                     message);
+            char *argv[] = { "osascript", "-e", script, NULL };
+            if (try_spawn("osascript", argv)) return;
+            fprintf(stderr, "Error: %s\n", message);
+            return;
+        }
+        // --- Linux and compatibles: try several backends ---
+        if (strcmp(sysinfo.sysname, "Linux") == 0) {
+            // 1) notify-send
+            {
+                char *argv1[] = { "notify-send", "Error", (char*)message, NULL };
+                if (try_spawn("/usr/bin/notify-send", argv1)) return;
+                if (try_spawn("/bin/notify-send", argv1)) return;
+                if (try_spawn("notify-send", argv1)) return;
+            }
+            // 2) zenity --error
+            {
+                char *argv2[] = { "zenity", "--error", "--text", (char*)message, NULL };
+                if (try_spawn("/usr/bin/zenity", argv2)) return;
+                if (try_spawn("zenity", argv2)) return;
+            }
+            // 3) kdialog --error
+            {
+                char *argv3[] = { "kdialog", "--error", (char*)message, NULL };
+                if (try_spawn("/usr/bin/kdialog", argv3)) return;
+                if (try_spawn("kdialog", argv3)) return;
+            }
+            // 4) xmessage (last resort GUI)
+            {
+                char *argv4[] = { "xmessage", "-center", (char*)message, NULL };
+                if (try_spawn("/usr/bin/xmessage", argv4)) return;
+                if (try_spawn("xmessage", argv4)) return;
+            }
+            // 5) stderr
+            fprintf(stderr, "Error: %s\n", message);
+            return;
+        }
+    }
+
+    // Unknown OS or uname failed → stderr fallback
+    fprintf(stderr, "Error: %s\n", message);
+}
+
 
 /*
 ___  ____ _ _ _ ____ ____    ___  _    ____ _  _ ___
 |__] |  | | | | |___ |__/    |__] |    |__| |\ |  |
 |    |__| |_|_| |___ |  \    |    |___ |  | | \|  |
-                
-#OPENING | https://www.youtube.com/watch?v=_85LaeTCtV8 :3
 */
-
-#define MAX_DATA_SIZE 4096
-
-// Global variable to hold the notification command
-static char notifyCmdFormat[256] = {0};
 
 // Convert binary data to ASCII representation
 static char* binaryToASCII(const unsigned char* data, int length) {
-    char* asciiStr = (char*) malloc(length + 1);
+    char* asciiStr = (char*) malloc((size_t)length + 1);
     if (!asciiStr) {
         perror("Failed to allocate memory for asciiStr");
         exit(1);
@@ -103,22 +178,10 @@ static char* binaryToASCII(const unsigned char* data, int length) {
     return asciiStr;
 }
 
-// Display an error message using the appropriate method for the OS
-static void showError(const char* message) {
-    if (!notifyCmdFormat[0]) {
-        // Fallback if not initialized
-        fprintf(stderr, "Error: %s\n", message ? message : "Unknown error");
-        return;
-    }
-    char cmd[1024];
-    snprintf(cmd, sizeof(cmd), notifyCmdFormat, message ? message : "Unknown error");
-    (void)system(cmd);
-}
-
 static char* findLongestValidPath(const char* str) {
     regex_t regex;
     regmatch_t matches[2];
-    // Regular expression pattern to match Windows-like file paths
+    // Match Windows-like file paths (e.g., G:\folder with spaces\file.ext)
     char pattern[] = "([A-Za-z]:[\\\\/][^ ]+( [^ ]+)*[^ ]*)";
     char* longestPath = NULL;
     int longestPathLen = 0;
@@ -162,7 +225,7 @@ static char* findMountedPath(char* foundPath) {
 
     char device[256], mountpoint[256], rest[512];
 
-    // Skip the drive letter and colon 
+    // Skip the drive letter and colon (e.g., "G:")
     char* corePath = foundPath + 2;
 
     while (fscanf(mounts, "%255s %255s %511s\n", device, mountpoint, rest) != EOF) {
@@ -183,19 +246,6 @@ static char* findMountedPath(char* foundPath) {
 }
 
 int main(int argc, char* argv[]) {
-    if (!notifyCmdFormat[0]) {
-        struct utsname sysinfo;
-        if (uname(&sysinfo) == 0) {
-            if (strcmp(sysinfo.sysname, "Linux") == 0) {
-                // Requires libnotify-bin (notify-send)
-                strcpy(notifyCmdFormat, "notify-send 'Error' '%s'");
-            } else if (strcmp(sysinfo.sysname, "Darwin") == 0) {
-                // macOS notification via AppleScript
-                strcpy(notifyCmdFormat, "osascript -e 'display notification \"%s\" with title \"Error\"'");
-            }
-        }
-    }
-
     if (argc != 2) {
         showError("Incorrect number of arguments.");
         return 1;
@@ -244,6 +294,7 @@ int main(int argc, char* argv[]) {
             }
         #endif
 
+        // We keep system() for openers so we can read the return code and fallback to parent dir
         if (system(cmd) != 0) {
             char errMsg[512];
             snprintf(errMsg, sizeof(errMsg), "Error opening path: %s", foundPath);
