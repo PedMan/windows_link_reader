@@ -13,7 +13,7 @@
 # LNK Reader 🖥️
 
 This program is made to **read and open Windows `.lnk` shortcut files on Linux/macOS**.
-The first version was a quick regex hack I made for practice — but since then I’ve reworked it to follow the official Microsoft SHLLINK spec for proper parsing.
+The first version was a quick regex hack I made for practice, but since then I’ve reworked it to follow the official Microsoft SHLLINK spec for proper parsing.
 
 That means it now supports:
 
