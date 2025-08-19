@@ -44,7 +44,10 @@ This program is designed to extract and open a file path from a Windows `.lnk` s
     - Uses regular expressions to extract the longest valid file path from the ASCII representation of the `.lnk` file.
 
 3. **OS Notification System**:
-    - Detects the underlying operating system (Linux or MacOS) and notifies the user using an appropriate notification mechanism if there are any errors or issues.
+   - Detects the underlying operating system (Linux or macOS).
+   - On Linux it tries several backends in order: `notify-send`, `zenity`, `kdialog`, `xmessage`.
+   - On macOS it uses `osascript`.
+   - If none are available, it falls back to printing the error in the terminal (`stderr`).
 
 4. **Path Normalization**:
     - Transforms any Windows-style backslashes in paths (`\`) to UNIX-style forward slashes (`/`), ensuring compatibility with non-Windows systems.
@@ -64,7 +67,7 @@ Before you begin, ensure you have the following installed:
 
 - GCC (GNU Compiler Collection) to compile the source code.
 - Linux or macOS (other Unix-like systems may work but are not officially supported).
-
+- On Linux, you may need `libnotify-bin` and `xdg-utils` installed to support desktop notifications.
 
 ## 💎 Recommendations  
 
@@ -85,14 +88,25 @@ If you're a 3D animator, consider:
 
 ### **LINUX Systems:**
 
-0. **Simply run setup.sh in same directory where is lnkReader.c**
-    ```bash
-    chmod +x setup.sh
-    ```
-    then right click, execute or
-    ```bash
-    ./setup.sh
-    ```
+0. **Simply run setup.sh in the same directory as lnkReader.c**  
+   On Debian/Ubuntu, this will also install the needed dependencies (`libnotify-bin`, `xdg-utils`):
+   
+```bash
+chmod +x setup.sh
+./setup.sh
+ ```
+   For Fedora:
+
+```bash
+sudo dnf install libnotify xdg-utils
+```
+
+  For Arch:
+
+```bash
+sudo pacman -S libnotify xdg-utils
+```
+
   But if you prefere a manual installation you can follow steps behind :
 
 
