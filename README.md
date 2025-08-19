@@ -91,21 +91,21 @@ If you're a 3D animator, consider:
 0. **Simply run setup.sh in the same directory as lnkReader.c**  
    On Debian/Ubuntu, this will also install the needed dependencies (`libnotify-bin`, `xdg-utils`):
    
-```bash
-chmod +x setup.sh
-./setup.sh
- ```
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
    For Fedora:
 
-```bash
-sudo dnf install libnotify xdg-utils
-```
+   ```bash
+   sudo dnf install libnotify xdg-utils
+   ```
 
-  For Arch:
+   For Arch:
 
-```bash
-sudo pacman -S libnotify xdg-utils
-```
+   ```bash
+   sudo pacman -S libnotify xdg-utils
+   ```
 
   But if you prefere a manual installation you can follow steps behind :
 
