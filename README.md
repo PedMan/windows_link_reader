@@ -10,175 +10,115 @@
                                                                               
 ```
 
+# LNK Reader 🖥️
 
-#  LNK reader 🖥️
+This program is made to **read and open Windows `.lnk` shortcut files on Linux/macOS**.
+The first version was a quick regex hack I made for practice — but since then I’ve reworked it to follow the official Microsoft SHLLINK spec for proper parsing.
 
-This program is designed to extract and open a file path from a Windows `.lnk` shortcut file on non-Windows systems. The program reads the binary content of the `.lnk` file, converts it into ASCII, attempts to find the longest valid path, and finally, tries to open the path using the system's default program.
+That means it now supports:
 
-> **Note:** Older compilers may encounter issues with the use of the `//` style comments present in this code. If you're facing compilation issues, you might want to replace these comments with the traditional `/* ... */` style. Alternatively, consider upgrading to a modern compiler version, such as GCC.
+* LocalBasePath, RelativePath, WorkingDir, Arguments, IconLocation (ANSI/Unicode)
+* Windows drive → Linux mount mapping
+* Proper handling of spaces, multiple spaces, and encoding quirks
 
-[Capture vidéo du 24-09-2023 01:32:40.webm](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
+It won’t cover 100% of exotic edge cases (e.g. weird *ExtraData blocks*, UNC network shares, or rare Unicode surrogate pairs), but it should handle **almost all `.lnk` files without bugs**.
 
-> **Note:** In this video, it might seem slow because I was waiting for you to read the titles. This program opens .lnk links almost instantly, faster than Windows.
+[Demo video](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
 
----
----
+> ⚡ Note: The video looks slow because I left time for you to read — in reality it opens links almost instantly, even faster than Windows.
+
 ---
 
 ## 📋 Table of Contents
 
 1. [Features](#-features)
 2. [Prerequisites](#-prerequisites)
-3. [Usage](#-usage)
-4. [Recommendations](#-recommendations)
-5. [Installation](#-installation)
+3. [Installation](#-installation)
+4. [Usage](#-usage)
+5. [Uninstallation](#-uninstallation)
 6. [License](#-license)
-7. [Support & Questions](#-support--questions)
-<!-- 3. [to do](#-todo) -->
+7. [Support](#-support)
+
+---
+
 ## 🌟 Features
 
-1. **Binary to ASCII Conversion**:
-    - The program can convert binary data to its ASCII representation. This is especially handy for extracting textual information from binary data.
+* ✅ Full spec parsing (no more fragile regex)
+* ✅ Path normalization (`\` → `/`)
+* ✅ Mount detection (map Windows drives on Linux)
+* ✅ Multi-backend notifications:
 
-2. **RegEx-based Path Extraction**:
-    - Uses regular expressions to extract the longest valid file path from the ASCII representation of the `.lnk` file.
+  * Linux: `notify-send`, `zenity`, `kdialog`, `xmessage`
+  * macOS: `osascript`
+  * Fallback: stderr
+ 
+* ✅ Opens with system default program (or parent dir if target missing)
+* ✅ Installer/uninstaller scripts
 
-3. **OS Notification System**:
-   - Detects the underlying operating system (Linux or macOS).
-   - On Linux it tries several backends in order: `notify-send`, `zenity`, `kdialog`, `xmessage`.
-   - On macOS it uses `osascript`.
-   - If none are available, it falls back to printing the error in the terminal (`stderr`).
+---
 
-4. **Path Normalization**:
-    - Transforms any Windows-style backslashes in paths (`\`) to UNIX-style forward slashes (`/`), ensuring compatibility with non-Windows systems.
-
-5. **Mounted Path Detection**:
-    - If the direct path extracted from the `.lnk` file doesn't exist on the file system, the program will attempt to find a corresponding mounted path (useful for systems with mounted Windows filesystems).
-
-6. **Default System Program Path Opening**:
-    - Once a valid path is identified, the program attempts to open it using the default program of the OS. If the path is not directly accessible, it will try to open its parent directory.
-
-7. **Fast install** :
-   - You can install it faster with the script setup.sh
-  
 ## 🔍 Prerequisites
 
-Before you begin, ensure you have the following installed:
+* GCC (or Clang) to compile
+* Linux or macOS
+* On Linux:
 
-- GCC (GNU Compiler Collection) to compile the source code.
-- Linux or macOS (other Unix-like systems may work but are not officially supported).
-- On Linux, you may need `libnotify-bin` and `xdg-utils` installed to support desktop notifications.
+  * `libnotify-bin` (for notifications)
+  * `xdg-utils` (for opening files)
 
-## 💎 Recommendations  
-
-In your quest for more tools to enhance your desktop productivity, these additional repositories are worth a look:
-
-- [File organizer](https://github.com/SECRET-GUEST/file_organizer) : A versatile tool for sorting and organizing files efficiently, ideal for managing recovered data.
-
-Looking for more? Discover user-friendly, GUI-free script here: 
-- [Tiny Scripts](https://github.com/SECRET-GUEST/tiny-scripts)
-
-If you're a 3D animator, consider:
-- [Animation](https://github.com/SECRET-GUEST/animation)
-
-
-
+---
 
 ## 📥 Installation
 
-### **LINUX Systems:**
+```bash
+git clone https://github.com/SECRET-GUEST/windows_link_reader.git
+cd windows_link_reader
+chmod +x setup.sh
+./setup.sh
+```
 
-0. **Simply run setup.sh in the same directory as lnkReader.c**  
-   On Debian/Ubuntu, this will also install the needed dependencies (`libnotify-bin`, `xdg-utils`):
-   
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
-   For Fedora:
+This will:
 
-   ```bash
-   sudo dnf install libnotify xdg-utils
-   ```
+* Compile `lnkreader.c` into `open_lnk`
+* Install required deps (if missing)
+* Create a `.desktop` file and register `.lnk` MIME type
 
-   For Arch:
+Now you can **double-click `.lnk` files** and they’ll open directly.
 
-   ```bash
-   sudo pacman -S libnotify xdg-utils
-   ```
+---
 
-  But if you prefere a manual installation you can follow steps behind :
+## ▶️ Usage
 
+From terminal:
 
-2. **Clone the repository**:
-    ```bash
-    git clone https://github.com/SECRET-GUEST/windows_link_reader.git
-    ```
+```bash
+./open_lnk path/to/file.lnk
+```
 
-3. **Navigate to the project folder**:
-    ```bash
-    cd REPOSITORY
-    ```
+Or just double-click a `.lnk` file once installed.
 
-4. **Compile the program**:
-    ```bash
-    gcc lnkReader.c -o open_lnk
-    ```
+---
 
-5. **Try the program**:
-    ```bash
-    ./open_lnk YOUR_FILE.lnk
-    ```
+## 🗑️ Uninstallation
 
-### **Debian Systems - Creating a `.desktop` Application to run lnk by simple click**
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
 
-1. **Create a new `.desktop` file**:
-    ```bash
-    vim ~/.local/share/applications/open_lnk.desktop
-    ```
-> **Note:** use vim nano or whatever else txt editor
-   
-3. **Add the following content to the file**, adjusting paths as necessary:
-    ```
-    [Desktop Entry]
-    Version=1.0
-    Name=Open LNK
-    Comment=Open a Windows .lnk file
-    Exec=/path_to_compiled_program/open_lnk %U
-    Terminal=true
-    Type=Application
-    Categories=Utility;
-    ```
+This will remove the binary and `.desktop` entry.
 
-4. **Make the `.desktop` file executable**:
-    ```bash
-    chmod +x ~/.local/share/applications/open_lnk.desktop
-    ```
-
-5. Now, you just have to use the program by default for .lnk files, by **"open with"** or in the properties.
-
-
-### **MacOS Systems:**
-
-  ###### I don't know why am I doing this tutorial but let's go ;
-
-1. **Ensure you have the Xcode command line tools installed**. This provides you with the necessary compilers:
-    ```bash
-    xcode-select --install
-    ```
-
-2. **Compile the program as indicated in the General Setup**.
-
-3. **To run the program, you can use the Terminal as in the General Setup** or create a simple script or Automator application for easier access.
+---
 
 ## 📜 License
 
-This repository is released under the [MIT License](LICENSE). Please see the `LICENSE` file for more information.
+Released under [MIT License](LICENSE).
 
+---
 
-## ❓ Support & Questions
+## ❓ Support
 
-If you have any questions or need support, please feel free to open an issue, a new discussion, or join my twitter.
+Open an [issue](https://github.com/SECRET-GUEST/windows_link_reader/issues) or reach me on Twitter.
 
 
 ```
