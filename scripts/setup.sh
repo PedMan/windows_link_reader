@@ -1,13 +1,29 @@
 #!/bin/bash
 set -euo pipefail
 
-# Build
-gcc lnkReader.c -o open_lnk -Wall -Wextra -O2
+# Go to the script's directory
+cd "$(dirname "$(realpath "$0")")"
 
-# Install dependencies on debian if available
+# Build
+gcc lnkreader.c -o open_lnk -Wall -Wextra -O2
+
+# Check dependencies only if apt-get exists
 if command -v apt-get >/dev/null 2>&1; then
-  sudo apt-get update
-  sudo apt-get install -y libnotify-bin xdg-utils
+  if ! command -v notify-send >/dev/null 2>&1; then
+    echo "Installing libnotify-bin..."
+    sudo apt-get update
+    sudo apt-get install -y libnotify-bin
+  else
+    echo "notify-send already available, skipping install."
+  fi
+
+  if ! command -v xdg-open >/dev/null 2>&1; then
+    echo "Installing xdg-utils..."
+    sudo apt-get update
+    sudo apt-get install -y xdg-utils
+  else
+    echo "xdg-open already available, skipping install."
+  fi
 fi
 
 # Create the .desktop 
