@@ -1,21 +1,29 @@
 #!/bin/bash
+set -euo pipefail
 
-# Compiling lnkReader.c into open_lnk
-gcc lnkReader.c -o open_lnk
+# Build
+gcc lnkReader.c -o open_lnk -Wall -Wextra -O2
 
-# Creating the .desktop file
-echo "[Desktop Entry]
+# Install dependencies on debian if available
+if command -v apt-get >/dev/null 2>&1; then
+  sudo apt-get update
+  sudo apt-get install -y libnotify-bin xdg-utils
+fi
+
+# Create the .desktop 
+cat > open_lnk.desktop <<EOF
+[Desktop Entry]
 Name=Open LNK
 Exec=$(pwd)/open_lnk %U
 Type=Application
 MimeType=application/x-ms-shortcut
-" > open_lnk.desktop
+NoDisplay=false
+Terminal=false
+EOF
 
-# Copying the .desktop file to the appropriate directory
+# Install the .desktop
 sudo cp open_lnk.desktop /usr/share/applications/
 
-# Updating the mime database
-sudo update-mime-database /usr/share/mime
-
-# Setting open_lnk as the default application to open .lnk files
+# Update MIME database if present and set default handler
+sudo update-mime-database /usr/share/mime || true
 xdg-mime default open_lnk.desktop application/x-ms-shortcut
