@@ -76,6 +76,7 @@ _ _  _ ____ ___ ____ _    _    ____ ___ _ ____ _  _
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>   // for strncasecmp()
 #include <wchar.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -84,6 +85,15 @@ _ _  _ ____ ___ ____ _    _    ____ ___ _ ____ _  _
 #include <ctype.h>
 #include <limits.h>
 #include <sys/stat.h>
+// --- Path mapping support ---
+typedef struct {
+    char *from;
+    char *to;
+    int hasWildcard;
+} PathMapping;
+
+static PathMapping *mappings = NULL;
+static size_t mappingCount = 0;
 
 #pragma pack(push,1)
 typedef struct {
@@ -356,6 +366,111 @@ static void normalize_backslashes(char *s) {
         if (*p == '\\') *p = '/';
 }
 
+// --- NEW: trim whitespace from both ends ---
+static char* trim(char *s) {
+    if (!s) return s;
+    while (isspace((unsigned char)*s)) s++;   // Trim leading
+    if (*s == 0) return s;
+    char *end = s + strlen(s) - 1;
+    while (end > s && isspace((unsigned char)*end)) *end-- = 0; // Trim trailing
+    return s;
+}
+
+// --- Config file loading and mapping ---
+static void load_mappings() {
+    const char *files[2];
+    files[0] = "/etc/lnkReader.conf";
+
+    // Per-user config
+    const char *home = getenv("HOME");
+    char userconf[PATH_MAX];
+    if (home) {
+        snprintf(userconf, sizeof(userconf), "%s/.config/lnkReader.conf", home);
+        files[1] = userconf;
+    } else {
+        files[1] = NULL;
+    }
+
+    for (int i = 0; i < 2; i++) {
+        if (!files[i]) continue;
+        FILE *f = fopen(files[i], "r");
+        if (!f) continue;
+
+        char line[1024];
+        while (fgets(line, sizeof(line), f)) {
+            if (line[0] == '#' || isspace((unsigned char)line[0])) continue;
+            char *eq = strchr(line, '=');
+            if (!eq) continue;
+
+			*eq = 0;
+			char *from = strdup(trim(line));
+			char *to   = strdup(trim(eq + 1));
+
+			// Normalize slashes in config entries
+			normalize_backslashes(from);
+			normalize_backslashes(to);
+
+            // Trim whitespace/newlines
+            for (char *p = from; *p; p++) if (*p == '\r' || *p == '\n') *p = 0;
+            for (char *p = to;   *p; p++) if (*p == '\r' || *p == '\n') *p = 0;
+
+            // Detect wildcard
+            int hasWildcard = 0;
+            size_t flen = strlen(from);
+            if (flen > 0 && from[flen-1] == '*') {
+                hasWildcard = 1;
+                from[flen-1] = 0; // strip '*'
+            }
+            size_t tlen = strlen(to);
+            if (tlen > 0 && to[tlen-1] == '*') {
+                to[tlen-1] = 0; // strip '*'
+            }
+
+            mappings = realloc(mappings, (mappingCount+1)*sizeof(PathMapping));
+            mappings[mappingCount].from = from;
+            mappings[mappingCount].to = to;
+            mappings[mappingCount].hasWildcard = hasWildcard;
+            mappingCount++;
+        }
+        fclose(f);
+    }
+}
+
+static char* apply_mappings(const char *path) {
+    char *normPath = strdup(path);
+    normalize_backslashes(normPath);
+
+    for (size_t i = 0; i < mappingCount; i++) {
+        PathMapping *m = &mappings[i];
+        size_t flen = strlen(m->from);
+        if (strncasecmp(normPath, m->from, flen) == 0) {
+            if (m->hasWildcard) {
+                const char *suffix = normPath + flen;
+                size_t n = strlen(m->to) + strlen(suffix) + 1;
+                char *out = malloc(n);
+                snprintf(out, n, "%s%s", m->to, suffix);
+
+                fprintf(stderr,
+                        "Mapping matched: \"%s*\" → \"%s*\"\nAfter mapping: %s\n",
+                        m->from, m->to, out);
+
+                free(normPath);
+                return out;
+            } else {
+                fprintf(stderr,
+                        "After matched: \"%s\" → \"%s\"\nAfter mapping: %s\n",
+                        m->from, m->to, m->to);
+
+                free(normPath);
+                return strdup(m->to);
+            }
+        }
+    }
+
+    fprintf(stderr, "No mapping matched for: %s\n", normPath);
+    return normPath; // unchanged
+}
+
 /*
 ___  ____ ____ _  _ ___ ____ ___     ____ ___  ____ _  _ 
 |  \ |___ [__  |_/   |  |  | |__]    |  | |__] |___ |\ | 
@@ -398,6 +513,10 @@ typedef struct {
     char *workingDir;         // Working directory
     char *arguments;          // Command-line arguments
     char *iconLocation;       // Icon file location
+	char *netName;            // Network share (ANSI)
+	char *netNameU;           // Network share (Unicode)
+	char *deviceName;         // Mapped drive letter target (ANSI)
+	char *deviceNameU;        // Mapped drive letter target (Unicode)
 } LnkInfo;
 
 // Release memory for all strings in a LnkInfo struct
@@ -412,6 +531,12 @@ static void freeLnkInfo(LnkInfo *li) {
     free(li->workingDir);
     free(li->arguments);
     free(li->iconLocation);
+// NEW for UNC
+	free(li->netName);
+	free(li->netNameU);
+	free(li->deviceName);
+	free(li->deviceNameU);
+// END OF NEW	
 }
 
 
@@ -421,6 +546,32 @@ _    _  _ _  _    ___  ____ ____ ____ ____ ____
 |___ | \| | \_    |    |  | |  \ ___] |___ |  \ 
                                                 
 */
+
+// Helper to read ANSI/Unicode at a given offset within LinkInfo block
+static char* read_ansi_at(FILE *f, long base, uint32_t off) {
+	if (!off) return NULL;
+	fseek(f, base + off, SEEK_SET);
+	return read_c_string(f, 1<<20);
+}
+static char* read_unicode_at(FILE *f, long base, uint32_t off) {
+	if (!off) return NULL;
+	fseek(f, base + off, SEEK_SET);
+	return read_w_string(f, 65535);
+}
+static char* join_unc(const char *share, const char *suffix) {
+	if (!share && !suffix) return NULL;
+	const char *s = share ? share : "";
+	const char *p = suffix ? suffix : "";
+	// \\share\suffix  (if suffix empty, just \\share)
+	size_t n = 2 + strlen(s) + (suffix && *suffix ? 1 + strlen(p) : 0) + 1;
+	char *out = (char*)malloc(n);
+	if (!out) return NULL;
+	if (suffix && *suffix)
+		snprintf(out, n, "\%s\\%s", s, p);
+	else
+		snprintf(out, n, "\%s", s);
+	return out;
+}
 
 // Parse LNK file: read header, LinkInfo, and strings
 static int parse_lnk(FILE *f, LnkInfo *out) {
@@ -474,8 +625,52 @@ static int parse_lnk(FILE *f, LnkInfo *out) {
         if (cpsOffU && cpsOffU < liSize) { fseek(f, li_start + cpsOffU, SEEK_SET); out->commonPathSuffixU = read_w_string(f, 65535); }
         else if (cpsOff && cpsOff < liSize) { fseek(f, li_start + cpsOff, SEEK_SET); out->commonPathSuffix = read_c_string(f, 1<<20); }
 
-        fseek(f, li_start + liSize, SEEK_SET); // jump to end of block
-    }
+		// Existing reads: liSize, liHeaderSize, liFlags, volOff, lbpOff, cnrlOff, cpsOff, lbpOffU, cpsOffU ...
+
+		// If CommonNetworkRelativeLink is present, parse it
+		if (cnrlOff && cnrlOff < liSize) {
+		  long cnrl_start = li_start + cnrlOff;
+		  fseek(f, cnrl_start, SEEK_SET);
+
+		  uint32_t cnrlSize = 0;
+		  if (fread(&cnrlSize, 4, 1, f) != 1 || cnrlSize < 0x14) {
+			showError("Bad CommonNetworkRelativeLink size");
+			return 0;
+		  }
+
+		  uint32_t cnrlFlags = 0, netNameOff = 0, devNameOff = 0, provType = 0;
+		  if (fread(&cnrlFlags, 4, 1, f) != 1) { showError("Bad CNRL flags"); return 0; }
+		  if (fread(&netNameOff, 4, 1, f) != 1) { showError("Bad NetName offset"); return 0; }
+		  if (fread(&devNameOff, 4, 1, f) != 1) { showError("Bad DeviceName offset"); return 0; }
+		  if (fread(&provType, 4, 1, f) != 1) { showError("Bad ProviderType"); return 0; }
+
+		  // Optional Unicode offsets if structure size >= 0x20 (per spec)
+		  uint32_t netNameOffU = 0, devNameOffU = 0;
+		  if (cnrlSize >= 0x20) {
+			if (fread(&netNameOffU, 4, 1, f) != 1) { showError("Bad NetNameU offset"); return 0; }
+			if (fread(&devNameOffU, 4, 1, f) != 1) { showError("Bad DeviceNameU offset"); return 0; }
+		  }
+
+		 // Read NetName / DeviceName (prefer Unicode)
+		 // Note: offsets are relative to start of CNRL block, not LinkInfo start.
+		 if (netNameOffU && (cnrl_start + netNameOffU) < (li_start + liSize)) {
+			out->netNameU = read_unicode_at(f, cnrl_start, netNameOffU);
+		 } else if (netNameOff && (cnrl_start + netNameOff) < (li_start + liSize)) {
+			out->netName = read_ansi_at(f, cnrl_start, netNameOff);
+		 }
+
+		 if (devNameOffU && (cnrl_start + devNameOffU) < (li_start + liSize)) {
+			out->deviceNameU = read_unicode_at(f, cnrl_start, devNameOffU);
+		 } else if (devNameOff && (cnrl_start + devNameOff) < (li_start + liSize)) {
+			out->deviceName = read_ansi_at(f, cnrl_start, devNameOff);
+		 }
+
+		  // Return to end of LinkInfo
+		  fseek(f, li_start + liSize, SEEK_SET);
+		}
+        
+		fseek(f, li_start + liSize, SEEK_SET); // jump to end of block
+   }
 
     //  Extra Strings 
     if (hdr.linkFlags & HAS_NAME)          out->nameString   = readStringData(f, unicode);
@@ -496,6 +691,15 @@ ___ ____ ____ ____ ____ ___    ___  _  _ _ _    ___
 
 // Build the most reliable target path from available fields
 static char* build_best_target(LnkInfo *li) {
+
+  // Prefer network UNC if NetName present (Unicode first)
+	const char *share = li->netNameU ? li->netNameU : li->netName;
+	const char *suffix = li->commonPathSuffixU ? li->commonPathSuffixU : li->commonPathSuffix;
+	if (share && *share) {
+		char *unc = join_unc(share, suffix);
+		if (unc) return unc;
+	}	
+	
     // Prefer Unicode base path if available, else ANSI version
     const char *base = li->localBasePathU ? li->localBasePathU : li->localBasePath;
     if (base && *base) return strdup(base);
@@ -542,6 +746,17 @@ int main(int argc, char *argv[]) {
     // Build best candidate target path
     char *target = build_best_target(&info);
     if (!target) { freeLnkInfo(&info); showError("No target path found"); return 1; }
+	
+	// Load mappings once
+	static int mappingsLoaded = 0;
+	if (!mappingsLoaded) { load_mappings(); mappingsLoaded = 1; }
+
+	// Apply mappings
+	fprintf(stderr, "Before mapping: %s\n", target);
+	char *mappedTarget = apply_mappings(target);
+
+	free(target);
+	target = mappedTarget;
 
     // Normalize path separators to Unix style
     normalize_backslashes(target);
