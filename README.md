@@ -20,8 +20,9 @@ That means it now supports:
 * LocalBasePath, RelativePath, WorkingDir, Arguments, IconLocation (ANSI/Unicode)
 * Windows drive → Linux mount mapping
 * Proper handling of spaces, multiple spaces, and encoding quirks
+* UNC network shares (must be mounted and use mapping config feature)
 
-It won’t cover 100% of exotic edge cases (e.g. weird *ExtraData blocks*, UNC network shares, or rare Unicode surrogate pairs), but it should handle **almost all `.lnk` files without bugs**.
+It won’t cover 100% of exotic edge cases (e.g. weird *ExtraData blocks*, ~UNC network shares~, or rare Unicode surrogate pairs), but it should handle **almost all `.lnk` files without bugs**.
 
 [Demo video](https://github.com/SECRET-GUEST/windows_link_reader/assets/92639080/f92222d6-e028-4166-8e6d-a9c7bd40f144)
 
