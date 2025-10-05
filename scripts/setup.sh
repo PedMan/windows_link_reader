@@ -38,6 +38,28 @@ say "[*] Building open_lnk from lnkReader.c with $CC..."
 BIN_SYS="/usr/local/bin/open_lnk"
 BIN_USER="$HOME/.local/bin/open_lnk"
 
+#  default config
+CONF_FILE="/etc/lnkReader.conf"
+say "[*] Ensuring default config at $CONF_FILE..."
+if command -v sudo >/dev/null 2>&1; then
+  if ! sudo test -f "$CONF_FILE"; then
+    sudo tee "$CONF_FILE" >/dev/null <<'EOF'
+# lnkReader Config
+#
+# [Destination Shortcut][*] = [Mapped Shortcut][*]
+# C:\Users\* = /mnt/home/*
+# \\Network\Share\* = /mnt/MountedShare/*
+# D:\Projects\ = /mnt/dev/projects/
+EOF
+    sudo chmod 644 "$CONF_FILE"
+    ok "Created default config at $CONF_FILE"
+  else
+    ok "Config already exists at $CONF_FILE (leaving untouched)"
+  fi
+else
+  warn "No sudo available; skipping system config creation"
+fi
+
 say "[*] Installing binary..."
 if command -v sudo >/dev/null 2>&1; then
   if sudo install -m0755 open_lnk "$BIN_SYS"; then
